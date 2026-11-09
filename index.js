@@ -1,0 +1,97 @@
+import 'dotenv/config'
+import express from 'express'
+import { MongoClient, ObjectId } from 'mongodb';
+import cors from 'cors';
+
+
+const app = express()
+const port = 8000
+
+
+app.use(cors());
+app.use(express.json());
+
+const client = new MongoClient(process.env.MONGODB_URI);
+export async function connectToMongoDB() {
+  try {
+    await client.connect();
+    console.log("You successfully connected to MongoDB!");
+    return client;
+  } catch (err) {
+    console.dir(err);
+  }
+}
+
+const mongoClient = await connectToMongoDB();
+
+const db = mongoClient.db("Event_data");
+
+const dataCollections = db.collection("Event_data_card");
+
+
+app.post("/CreateEvents", async (req, res) => {
+  const data = req.body;
+
+  // Event date validation
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const eventDate = new Date(data.eventDate);
+
+  if (isNaN(eventDate.getTime()) || eventDate <= today) {
+    return res.status(400).send({
+      message: "Please select a future date",
+    });
+  }
+
+  try {
+    const result = await dataCollections.insertOne(data);
+
+    res.send({
+      message: "Event created successfully",
+      result,
+    });
+  } catch (error) {
+    res.status(500).send({
+      message: "Failed to create event",
+    });
+  }
+});
+
+
+app.get("/ManageEvent", async (req,res)=>{
+  const result = await dataCollections.find().toArray()
+  res.send(result)
+})
+
+app.get('/eventDetail/:id',async(req,res)=>{
+  const {id} = req.params
+  const result = await dataCollections.findOne({_id:new ObjectId(id)})
+  res.send(result)
+});
+app.patch("/eventDetail/:id", async (req, res) => {
+  const { id } = req.params;
+  const data = req.body;
+
+  const result = await dataCollections.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: data }
+  );
+
+  res.json(result);
+});
+
+app.delete('/eventDetail/:id',async(req,res)=>{
+  const{id} =req.params
+  const result = await dataCollections.deleteOne({_id:new ObjectId(id)})
+  res.json(result)
+});
+
+
+app.get('/', (req, res) => {
+  res.send('Hello World!')
+})
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
