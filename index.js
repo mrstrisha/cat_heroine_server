@@ -86,6 +86,30 @@ app.get("/ManageEvent", async (req, res) => {
   }
 });
 
+
+// ==================================
+// MY EVENTS (JWT PROTECTED)
+// ==================================
+
+app.get("/myEvents", verifyToken, async (req, res) => {
+  try {
+    const userEmail = req.user.email;
+
+    const result = await dataCollections
+      .find({ createdBy: userEmail })
+      .sort({ _id: -1 })
+      .toArray();
+
+    res.send(result);
+  } catch (error) {
+    console.error("My Events Error:", error);
+
+    res.status(500).send({
+      message: "Failed to load your events",
+    });
+  }
+});
+
 // ==================================
 // 3. GET SINGLE EVENT (PUBLIC)
 // ==================================
