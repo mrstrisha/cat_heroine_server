@@ -6,7 +6,7 @@ import cors from "cors";
 import { verifyToken } from "./middleware/verifyToken.js";
 
 const app = express();
-const port = 8000;
+
 
 app.use(cors());
 app.use(express.json());
@@ -419,7 +419,6 @@ app.get("/", (req, res) => {
 // START SERVER
 // ==================================
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
- export default app;
+
+
+export default app;
